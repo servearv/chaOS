@@ -4,9 +4,11 @@
 #include <limits.h>
 #include "uart.h"
 #include "../common.h"
+#include "../spinlock.h"
 
 #define to_hex_digit(n) ('0' + (n) + ((n) < 10 ? 0 : 'a' - '0' - 10))
 
+static spinlock_t uart_lock;
 
 
 // Go here for docs.  http://byterunner.com/16550.html
@@ -40,6 +42,7 @@
 #define writeReg(reg, val) (*(Reg(reg)) = (val)) 					// Writes val to reg
 
 
+
 /*
  * Initialize NS16550A UART
  */
@@ -53,6 +56,10 @@ void uart_init(void) {
 
 	// Enable Recieve and Transmit Interrupts (IER[1:0])
 	writeReg(IER, IER_RX_ENABLE | IER_TX_ENABLE);
+
+	// Initialize the spinlock for UART
+	lock_init(&uart_lock, "uart");
+
 
   // For a real UART, we need to compute and set the baud rate
   // But since this is an emulated UART, we don't need to do anything
@@ -272,8 +279,10 @@ void kvprintf(const char *format, va_list arg) {
 }
 
 void kprintf(const char *format, ...) {
+	acquire(&uart_lock); // Acquire lock for thread safety
   va_list arg;
   va_start(arg, format);
   kvprintf(format, arg);
   va_end(arg);
+	release(&uart_lock); // Release lock
 }
