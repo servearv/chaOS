@@ -16,7 +16,7 @@ MACH=virt                                         # QEMU Machine Type = Virtual
 MEM=128M                                          # QEMU Memory Size
 
 ifndef CPUS                                       # If CPUS is not defined, set it to 3
-CPUS := 2 
+CPUS := 5 
 endif
 
 RUN=$(QEMU) -nographic -machine $(MACH) -m $(MEM) # -nographic coz no graphical drivers, straight to our terminal

@@ -18,6 +18,7 @@ void panic(const char *format, ...) {
 
 int get_cpuid(void) {
   int cpu_id;
-  asm volatile ("mv %0, tp" : "=r"(cpu_id));
+  asm volatile ("csrr %0, mhartid" : "=r" (cpu_id));
   return cpu_id;
 }
+

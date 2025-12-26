@@ -44,4 +44,3 @@ void release(spinlock_t *lk) {
 		__atomic_clear(&lk->lock, __ATOMIC_RELEASE);
 }
 
-
