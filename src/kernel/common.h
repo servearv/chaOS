@@ -3,5 +3,6 @@
 
 int toupper(int);
 void panic(const char *, ...);
+int get_cpuid(void);
 
 #endif

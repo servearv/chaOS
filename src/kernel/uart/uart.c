@@ -3,25 +3,56 @@
 #include <stdarg.h>
 #include <limits.h>
 #include "uart.h"
-#include "common.h"
+#include "../common.h"
 
 #define to_hex_digit(n) ('0' + (n) + ((n) < 10 ? 0 : 'a' - '0' - 10))
+
+
+
+// Go here for docs.  http://byterunner.com/16550.html
+//
+#define RHR 0                 // receive holding register (for input bytes) (Read Mode)
+#define THR 0                 // transmit holding register (for output bytes) (Write Mode)
+														
+#define IER 1                 // interrupt enable register
+#define IER_RX_ENABLE (1<<0)  // IER bit 0 enable (responsible for receive interrupts)
+#define IER_TX_ENABLE (1<<1)  // IER bit 1 enable (responsible for transmit interrupts)j
+
+#define FCR 2                 // FIFO control register
+#define FCR_FIFO_ENABLE (1<<0)
+#define FCR_FIFO_CLEAR (3<<1) // clear the content of the two FIFOs
+															
+#define ISR 2                 // interrupt status register
+															
+#define LCR 3                 // line control register
+#define LCR_EIGHT_BITS (3<<0)
+															
+#define LSR 5                 // line status register
+#define LSR_RX_READY (1<<0)   // input is waiting to be read from RHR
+#define LSR_TX_IDLE (1<<5)    // THR can accept another character to send
+
+
+
+
+
+#define Reg(reg) (volatile uint8_t *)(UART_ADDR + (reg))  // UART_ADDR defined in .h (Maybe combine these defines in another file)
+#define readReg(reg) (*(Reg(reg))) 												// Reads character from the reg
+#define writeReg(reg, val) (*(Reg(reg)) = (val)) 					// Writes val to reg
+
 
 /*
  * Initialize NS16550A UART
  */
-void uart_init(size_t base_addr) {
-  volatile uint8_t *ptr = (uint8_t *)base_addr;
-
+void uart_init(void) {
+	
   // Set word length to 8 (LCR[1:0])
-  const uint8_t LCR = 0b11;
-  ptr[3] = LCR;
+	writeReg(LCR, LCR_EIGHT_BITS);
 
   // Enable FIFO (FCR[0])
-  ptr[2] = 0b1;
+	writeReg(FCR, FCR_FIFO_ENABLE | FCR_FIFO_CLEAR);
 
-  // Enable receiver buffer interrupts (IER[0])
-  ptr[1] = 0b1;
+	// Enable Recieve and Transmit Interrupts (IER[1:0])
+	writeReg(IER, IER_RX_ENABLE | IER_TX_ENABLE);
 
   // For a real UART, we need to compute and set the baud rate
   // But since this is an emulated UART, we don't need to do anything
@@ -40,12 +71,39 @@ void uart_init(size_t base_addr) {
   // ptr[3] = LCR;
 }
 
-static void uart_put(size_t base_addr, uint8_t c) {
-  *(uint8_t *)base_addr = c;
+void uart_put(uint8_t c) {
+	// Wait while not in Transmit Holding Register Empty state
+	while (!(readReg(LSR) & LSR_TX_IDLE))
+		;
+
+	// Write the character to the Transmit Holding Register
+	writeReg(THR, c);
+}
+
+int uart_get(uint8_t *c) {
+	if ((readReg(LSR) & LSR_RX_READY) == 0)
+		return -1; // No data available
+	
+	return readReg(RHR);
+}
+
+// UART interrupt handler
+void uart_intr(void) {
+	readReg(ISR); // Acknowledge the interrupt by reading the ISR
+	
+	while (1) {
+		uint8_t c;
+		int res = uart_get(&c);
+		if (res == -1)
+			break; // No more data available
+
+		// Echo the received character back
+		uart_put(c);
+	}
 }
 
 int kputchar(int character) {
-  uart_put(UART_ADDR, (uint8_t)character);
+  uart_put((uint8_t)character);
   return character;
 }
 

@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "syscon.h"
-#include "uart.h"
+#include "uart/uart.h"
 
 void poweroff(void) {
   kputs("Poweroff requested");

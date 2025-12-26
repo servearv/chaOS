@@ -7,7 +7,7 @@
 // 0x10000000 is memory-mapped address of UART according to device tree
 #define UART_ADDR 0x10000000
 
-void uart_init(size_t);
+void uart_init(void);
 int kputchar(int);
 int kputs(const char *);
 void kvprintf(const char *, va_list);

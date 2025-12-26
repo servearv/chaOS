@@ -15,8 +15,12 @@ QEMU=qemu-system-riscv64
 MACH=virt                                         # QEMU Machine Type = Virtual
 MEM=128M                                          # QEMU Memory Size
 
+ifndef CPUS                                       # If CPUS is not defined, set it to 3
+CPUS := 5 
+endif
+
 RUN=$(QEMU) -nographic -machine $(MACH) -m $(MEM) # -nographic coz no graphical drivers, straight to our terminal
-RUN+=-bios none -kernel $(KERNEL_IMAGE)
+RUN+=-bios none -kernel $(KERNEL_IMAGE) -smp $(CPUS)
 
 
 
@@ -29,7 +33,7 @@ all: uart syscon common kmain
 	$(CC) *.o $(RUNTIME) $(CFLAGS) -T $(LINKER_SCRIPT) -o $(KERNEL_IMAGE)
 
 uart:
-	$(CC) -c kernel/uart.c -o uart.o $(CFLAGS)
+	$(CC) -c kernel/uart/uart.c -o uart.o $(CFLAGS)
 
 syscon:
 	$(CC) -c kernel/syscon.c -o syscon.o $(CFLAGS)

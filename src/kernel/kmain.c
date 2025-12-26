@@ -1,4 +1,4 @@
-#include "uart.h"
+#include "uart/uart.h"
 #include "syscon.h"
 #include "common.h"
 
@@ -6,7 +6,7 @@
 #define MODE 'M'
 
 void kmain(void) {
-  uart_init(UART_ADDR);
+  uart_init();
 
   kprintf("Hello %s World!\n", ARCH);
   kprintf("We are in %c-mode!\n", MODE);

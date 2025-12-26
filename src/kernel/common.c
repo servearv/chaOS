@@ -1,6 +1,6 @@
 #include <stdarg.h>
 #include "common.h"
-#include "uart.h"
+#include "uart/uart.h"
 
 int toupper(int c) {
   return 'a' <= c && c <= 'z' ? c + 'A' - 'a' : c;
@@ -14,4 +14,10 @@ void panic(const char *format, ...) {
   kvprintf(format, arg);
   va_end(arg);
   asm volatile ("wfi");
+}
+
+int get_cpuid(void) {
+  int cpu_id;
+  asm volatile ("mrs %0, mpidr_el1" : "=r"(cpu_id));
+  return cpu_id & 0xff; 
 }
