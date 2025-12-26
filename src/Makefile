@@ -29,7 +29,7 @@ RUN+=-bios none -kernel $(KERNEL_IMAGE) -smp $(CPUS)
 
 
 
-all: uart syscon common kmain
+all: uart syscon common spinlock kmain
 	$(CC) *.o $(RUNTIME) $(CFLAGS) -T $(LINKER_SCRIPT) -o $(KERNEL_IMAGE)
 
 uart:
@@ -40,6 +40,9 @@ syscon:
 
 common:
 	$(CC) -c kernel/common.c -o common.o $(CFLAGS)
+
+spinlock:
+	$(CC) -c kernel/spinlock.c -o spinlock.o $(CFLAGS)
 
 kmain:
 	$(CC) -c kernel/kmain.c -o kmain.o $(CFLAGS)
